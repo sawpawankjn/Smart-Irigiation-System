@@ -1,0 +1,128 @@
+#define BLYNK_TEMPLATE_ID "TMPL3ooDhO7vH"
+#define BLYNK_TEMPLATE_NAME "hydroponic"
+#define BLYNK_AUTH_TOKEN "2Rq9KzfyRHa0mm0lCC8eZYgWFwsa3xvP"
+#include <Wire.h>
+#define BLYNK_PRINT Serial
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <DHT.h>
+#define trig D6
+#define echo D5
+#define TH D3
+#define Rain A0
+long duration;
+int distance;
+#define moisture D4
+int m1= D1;
+int m2= D2;
+int m3= D7;
+int data;
+
+
+
+30
+int data1 = 0;
+int ultra = D8;
+DHT dht(TH, DHT11);
+char auth[] = BLYNK_AUTH_TOKEN;
+char ssid[] = "demo"; // your ssid
+char pass[] = "demo1234"; // your pass
+BlynkTimer timer;
+void setup()
+{ Serial.begin(9600);
+ Blynk.begin(auth, ssid, pass);
+ // Debug console
+ pinMode(trig, OUTPUT); // Sets the trigPin as an Output
+ pinMode(echo, INPUT); // Sets the echoPin as an Inpu
+ pinMode(Rain, INPUT);
+ pinMode(moisture, INPUT);
+ pinMode(m1, OUTPUT);
+ pinMode(m3, OUTPUT);
+ pinMode(m2, OUTPUT);
+
+ dht.begin();
+
+
+
+
+31
+ // Setup a function to be called every second
+ }
+void ultrasonicSensor()
+{
+ digitalWrite(trig, LOW); // Makes trigPin low
+ delayMicroseconds(2); // 2 micro second delay
+ digitalWrite(trig, HIGH); // tigPin high
+ delayMicroseconds(10); // trigPin high for 10 micro seconds
+ digitalWrite(trig, LOW); // trigPin low
+ duration = pulseIn(echo, HIGH); //Read echo pin, time in microseconds
+ distance = duration * 0.034 / 2; //Calculating actual/real distance
+ Serial.print("Distance = "); //Output distance on arduino serial monitor
+ Serial.println(distance);
+
+ Blynk.virtualWrite(V0, distance);
+ if(distance>=6)
+ {
+ Serial.println("PUMP1");
+ digitalWrite(m1,HIGH);
+ delay(2000);
+ }
+ else
+{
+ digitalWrite(m1,LOW);
+
+
+
+32
+ delay(200);
+}
+
+}
+void DHT11sensor() {
+ float h = dht.readHumidity();
+ float t = dht.readTemperature();
+ if (isnan(h) || isnan(t)) {
+ Serial.println("Failed to read from DHT sensor!");
+ return;
+ }
+ Blynk.virtualWrite(V1, t);
+  Blynk.virtualWrite(V2, h);
+if(t>=35)
+{Serial.println("PUMP2 ON");
+ digitalWrite(m2,HIGH);
+ delay(2000);
+}
+if(t<=34)
+{
+ Serial.println("PUMP2 OFF");
+digitalWrite(m2,LOW);
+ delay(200);
+}
+}
+
+
+
+33
+void moisturesensor()
+{
+data = digitalRead(moisture);
+ Blynk.virtualWrite(V4, data);
+ Serial.println(data);
+ if(data==1) {
+ Serial.println("PUMP3 ON");
+ digitalWrite(m3,HIGH);
+ delay(2000);
+ }
+ else
+{
+ digitalWrite(m3,LOW);
+ delay(200);
+}
+}
+void loop()
+{
+ DHT11sensor();
+ ultrasonicSensor();
+moisturesensor();
+ Blynk.run();
+}
